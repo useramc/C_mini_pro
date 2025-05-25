@@ -1,0 +1,218 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_EMPLOYEES 50
+#define MAX_LINE_LENGTH 256
+
+typedef struct Employee {
+    char Name[50];
+    char ID[10];
+    int Salary;
+    int No_of_leaves;
+    int No_of_paid_leaves;
+    int Claims;
+    int Years_of_service;
+} employee_details;
+
+void read_employees(employee_details employees[], int *count);
+void print_employees(employee_details employees[], int count);
+void add_employees(employee_details employees[], int *count);
+void save_to_csv(employee_details employees[], int count);
+void sort_by_id(employee_details employees[], int count);
+
+int main() {
+    employee_details employees[MAX_EMPLOYEES];
+    int employee_count = 0;
+
+    read_employees(employees, &employee_count);
+    printf("Existing Employee Details Record:\n");
+    print_employees(employees, employee_count);
+    
+    printf("\nDo you want to add new employees? (1=Yes, 0=No): ");
+    int choice;
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input\n");
+        return 1;
+    }
+    
+    if (choice == 1) {
+        add_employees(employees, &employee_count);
+        save_to_csv(employees, employee_count);
+    }
+
+    printf("\nDo you want to sort employees by ID? (1=Yes, 0=No): ");
+    int sort_choice;
+    if (scanf("%d", &sort_choice) != 1) {
+        printf("Invalid input\n");
+        return 1;
+    }
+    
+    if (sort_choice == 1) {
+        sort_by_id(employees, employee_count);
+    }
+    print_employees(employees, employee_count);
+    
+}
+
+void read_employees(employee_details employees[], int *count) {
+    FILE *fp = fopen("indian_employee_data.csv", "r");
+    if (fp == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Skip header line
+    char header[MAX_LINE_LENGTH];
+    if (fgets(header, sizeof(header), fp) == NULL) {
+        fclose(fp);
+        return;
+    }
+
+    *count = 0;
+    while (*count < MAX_EMPLOYEES && 
+           fscanf(fp, "%49[^,],%9[^,],%d,%d,%d,%d,%d\n",
+                  employees[*count].Name,
+                  employees[*count].ID,
+                  &employees[*count].Salary,
+                  &employees[*count].No_of_leaves,
+                  &employees[*count].No_of_paid_leaves,
+                  &employees[*count].Claims,
+                  &employees[*count].Years_of_service) == 7) {
+        (*count)++;
+    }
+
+    fclose(fp);
+}
+
+void print_employees(employee_details employees[], int count) {
+    printf("\nEmployee Details:\n");
+    printf("-----------------------------------------------------------------\n");
+    printf("Name\t\tID\tSalary\tLeaves\tPaid Leaves\tClaims\tYoS\n");
+    printf("-----------------------------------------------------------------\n");
+
+    for (int i = 0; i < count; i++) {
+        printf("%-15s\t%s\t%d\t%d\t%d\t\t%d\t%d\n",
+               employees[i].Name,
+               employees[i].ID,
+               employees[i].Salary,
+               employees[i].No_of_leaves,
+               employees[i].No_of_paid_leaves,
+               employees[i].Claims,
+               employees[i].Years_of_service);
+    }
+}
+
+void add_employees(employee_details employees[], int *count) {
+    int num_to_add;
+    printf("How many employees do you want to add? (1-%d): ", MAX_EMPLOYEES - *count);
+    if (scanf("%d", &num_to_add) != 1 || num_to_add <= 0 || num_to_add > MAX_EMPLOYEES - *count) {
+        printf("Invalid number of employees to add\n");
+        return;
+    }
+
+    for (int i = 0; i < num_to_add; i++) {
+        printf("\nEnter details for employee %d/%d:\n", i+1, num_to_add);
+        
+        printf("Name: ");
+        if (scanf(" %49[^\n]", employees[*count].Name) != 1) {
+            printf("Invalid name input\n");
+            continue;
+        }
+
+        printf("ID: ");
+        if (scanf(" %9s", employees[*count].ID) != 1) {
+            printf("Invalid ID input\n");
+            continue;
+        }
+
+        printf("Salary: ");
+        if (scanf("%d", &employees[*count].Salary) != 1) {
+            printf("Invalid salary input\n");
+            continue;
+        }
+
+        printf("No. of Leaves: ");
+        if (scanf("%d", &employees[*count].No_of_leaves) != 1) {
+            printf("Invalid leaves input\n");
+            continue;
+        }
+
+        printf("No. of Paid Leaves: ");
+        if (scanf("%d", &employees[*count].No_of_paid_leaves) != 1) {
+            printf("Invalid paid leaves input\n");
+            continue;
+        }
+
+        printf("Claims: ");
+        if (scanf("%d", &employees[*count].Claims) != 1) {
+            printf("Invalid claims input\n");
+            continue;
+        }
+
+        printf("Years of Service: ");
+        if (scanf("%d", &employees[*count].Years_of_service) != 1) {
+            printf("Invalid years of service input\n");
+            continue;
+        }
+
+        (*count)++;
+        printf("Employee added successfully!\n");
+    }
+}
+
+void save_to_csv(employee_details employees[], int count) {
+    FILE *fp = fopen("indian_employee_data_updated.csv", "w");
+    if (fp == NULL) {
+        perror("Error opening file for writing");
+        return;
+    }
+
+    // Write header
+    fprintf(fp, "Name,ID,Salary (INR),No. of Leaves,No. of Paid Leaves,Claims (INR),Years of Service\n");
+
+    // Write employee data
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%s,%s,%d,%d,%d,%d,%d\n",employees[i].Name,
+                employees[i].ID,
+                employees[i].Salary,
+                employees[i].No_of_leaves,
+                employees[i].No_of_paid_leaves,
+                employees[i].Claims,
+                employees[i].Years_of_service);
+    }
+
+    if (fclose(fp) != 0) {
+        perror("Error closing file");
+    }
+    printf("\nEmployee data saved to 'indian_employee_data_updated.csv'\n");
+}
+
+int extract_id_number(const char *id) {
+    // Skip non-digit characters
+    while (*id && !isdigit(*id)) {
+        id++;
+    }
+    
+    // Convert the remaining digits to a number
+    return atoi(id);
+}
+
+void sort_by_id(employee_details employees[], int count) {
+    // Using bubble sort for simplicity
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            int id1 = extract_id_number(employees[j].ID);
+            int id2 = extract_id_number(employees[j+1].ID);
+            
+            if (id1 > id2) {
+                // Swap the employees
+                employee_details temp = employees[j];
+                employees[j] = employees[j+1];
+                employees[j+1] = temp;
+            }
+        }
+    }
+    printf("\nEmployees sorted by ID successfully!\n");
+}
