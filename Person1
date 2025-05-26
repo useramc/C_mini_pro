@@ -5,6 +5,8 @@
 
 #define MAX_EMPLOYEES 50
 #define MAX_LINE_LENGTH 256
+#define PASSWORD "PES2UG24CS" 
+#define MAX_ATTEMPTS 3            
 
 typedef struct Employee {
     char Name[50];
@@ -16,13 +18,20 @@ typedef struct Employee {
     int Years_of_service;
 } employee_details;
 
+int authenticate_user();
 void read_employees(employee_details employees[], int *count);
 void print_employees(employee_details employees[], int count);
 void add_employees(employee_details employees[], int *count);
 void save_to_csv(employee_details employees[], int count);
 void sort_by_id(employee_details employees[], int count);
+void calculate_total_payroll(employee_details employees[], int count);
 
 int main() {
+
+    if (!authenticate_user()) {
+        printf("Maximum password attempts exceeded. Exiting...\n");
+        return 1;  // Exit if authentication fails
+    }
     employee_details employees[MAX_EMPLOYEES];
     int employee_count = 0;
 
@@ -53,7 +62,27 @@ int main() {
         sort_by_id(employees, employee_count);
     }
     print_employees(employees, employee_count);
+    calculate_total_payroll(employees, employee_count);
     
+}
+int authenticate_user() {
+    char input_password[50];
+    int attempts = 0;
+
+    printf("=== Payroll System Access ===\n");
+    while (attempts < MAX_ATTEMPTS) {
+        printf("Enter password (Attempt %d/%d): ", attempts + 1, MAX_ATTEMPTS);
+        scanf("%s", input_password);
+
+        if (strcmp(input_password, PASSWORD) == 0) {
+            printf("Access granted!\n");
+            return 1;  // Success
+        } else {
+            printf("Incorrect password. Try again.\n");
+            attempts++;
+        }
+    }
+    return 0;  // Failed all attempts
 }
 
 void read_employees(employee_details employees[], int *count) {
@@ -86,12 +115,12 @@ void read_employees(employee_details employees[], int *count) {
 
 void print_employees(employee_details employees[], int count) {
     printf("\nEmployee Details:\n");
-    printf("-----------------------------------------------------------------\n");
-    printf("Name\t\tID\tSalary\tLeaves\tPaid Leaves\tClaims\tYoS\n");
-    printf("-----------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------------\n");
+    printf("Name\t\tID\tSalary\tLeaves\tPaid Leaves\tClaims\tYears of Service\n");
+    printf("---------------------------------------------------------------------------------\n");
 
     for (int i = 0; i < count; i++) {
-        printf("%-15s\t%s\t%d\t%d\t%d\t\t%d\t%d\n",
+        printf("%-15s\t%s\t%d\t%d\t%d\t\t%d\t\t%d\n",
                employees[i].Name,
                employees[i].ID,
                employees[i].Salary,
@@ -166,9 +195,11 @@ void save_to_csv(employee_details employees[], int count) {
         perror("Error opening file for writing");
         return;
     }
+
     fprintf(fp, "Name,ID,Salary (INR),No. of Leaves,No. of Paid Leaves,Claims (INR),Years of Service\n");
     for (int i = 0; i < count; i++) {
-        fprintf(fp, "%s,%s,%d,%d,%d,%d,%d\n",employees[i].Name,
+        fprintf(fp, "%s,%s,%d,%d,%d,%d,%d\n",
+                employees[i].Name,
                 employees[i].ID,
                 employees[i].Salary,
                 employees[i].No_of_leaves,
@@ -194,7 +225,7 @@ int extract_id_number(const char *id) {
 }
 
 void sort_by_id(employee_details employees[], int count) {
-    // Using bubble sort 
+    // Using Bubble sort
     for (int i = 0; i < count - 1; i++) {
         for (int j = 0; j < count - i - 1; j++) {
             int id1 = extract_id_number(employees[j].ID);
@@ -208,5 +239,33 @@ void sort_by_id(employee_details employees[], int count) {
             }
         }
     }
-    printf("\nEmployees sorted by ID successfully!\n");
+    printf("\nEmployees sorted by ID successfully!\n");}
+    void calculate_total_payroll(employee_details employees[], int count) 
+    {
+    int total_salary = 0;
+    int total_claims = 0;
+    int total_payroll = 0;
+    
+
+    for (int i = 0; i < count; i++) {
+        total_salary += employees[i].Salary;
+        total_claims += employees[i].Claims;
+    }
+
+    // Adjust for unpaid leaves (assuming unpaid leaves = total leaves - paid leaves)
+    for (int i = 0; i < count; i++) {
+        int unpaid_leaves = employees[i].No_of_leaves - employees[i].No_of_paid_leaves;
+        if (unpaid_leaves > 0) {
+            // Deduct a day's wage for each unpaid leave (assuming 30 days/month)
+            int daily_wage = employees[i].Salary / 30;
+            total_salary -= (unpaid_leaves * daily_wage);
+        }
+    }
+total_payroll = total_salary + total_claims;
+
+    printf("\n--- Payroll Summary ---\n");
+    printf("Total Base Salaries: Rs.%d\n", total_salary);
+    printf("Total Claims: Rs.%d\n", total_claims);
+    printf("Total Payroll (Salaries + Claims): Rs.%d\n",total_payroll);
 }
+
