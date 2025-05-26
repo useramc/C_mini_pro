@@ -1,0 +1,213 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_EMPLOYEES 100
+#define MAX_STRING_LENGTH 100
+
+typedef struct {
+    char name[MAX_STRING_LENGTH ];
+    char id[MAX_STRING_LENGTH ];
+    int salary;
+    int leaves;
+    int paid_leaves;
+    int claims;
+    int years;
+} Employee;
+
+Employee employees[MAX_EMPLOYEES];
+int employee_count = 0;
+
+void readCSV(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error: Could not open the file '%s'\n", filename);
+        return;
+    }
+
+    char line[256];
+    fgets(line, sizeof(line), fp);  
+
+    while (fgets(line, sizeof(line), fp) && employee_count < MAX_EMPLOYEES) {
+        char *newline = strchr(line, '\n');
+        if (newline) *newline = '\0';
+
+        char *token = strtok(line, ",");
+        if (!token) continue;
+        strncpy(employees[employee_count].name, token,MAX_STRING_LENGTH-1);
+        employees[employee_count].name[MAX_STRING_LENGTH-1] = '\0';
+
+        token = strtok(NULL, ",");
+        if (!token) continue;
+        strncpy(employees[employee_count].id, token,MAX_STRING_LENGTH-1);
+        employees[employee_count].id[MAX_STRING_LENGTH-1] = '\0';
+
+        token = strtok(NULL, ",");
+        if (!token) continue;
+        employees[employee_count].salary = atoi(token);
+
+        token = strtok(NULL, ",");
+
+        if (!token) continue;
+        employees[employee_count].leaves = atoi(token);
+
+        token = strtok(NULL, ",");
+        if (!token) continue;
+        employees[employee_count].paid_leaves = atoi(token);
+
+        token = strtok(NULL, ",");
+        if (!token) continue;
+        employees[employee_count].claims = atoi(token);
+
+        token = strtok(NULL, ",");
+        if (!token) continue;
+        employees[employee_count].years = atoi(token);
+
+        employee_count++;
+    }
+    fclose(fp);
+}
+
+void displayAll() {
+    if (employee_count == 0) {
+        printf("No employees to display.\n");
+        return;
+    }
+
+    printf("%-20s %-10s %-8s %-8s %-12s %-8s %-6s\n", "Name", "ID", "Salary", "Leaves", "Paid Leaves", "Claims", "Years");
+
+    for (int i = 0; i < employee_count; i++) {
+        printf("%-20s %-10s %-8d %-8d %-12d %-8d %-6d\n",
+               employees[i].name, employees[i].id, employees[i].salary,
+               employees[i].leaves, employees[i].paid_leaves,
+               employees[i].claims, employees[i].years);
+    }
+}
+
+void selectionSortByName() {
+    for (int i = 0; i < employee_count - 1; i++) {
+        int min = i;
+        for (int j = i + 1; j < employee_count; j++) {
+            if (strcmp(employees[j].name, employees[min].name) < 0) {
+                min = j;
+            }
+        }
+        if (min != i) {
+            Employee temp = employees[i];
+            employees[i] = employees[min];
+            employees[min] = temp;
+        }
+    }
+}
+
+void calculateAverageSalary() {
+    if (employee_count == 0) {
+        printf("No employees found  to calculate average.\n");
+        return;
+    }
+
+    int total = 0;
+    for (int i = 0; i < employee_count; i++) {
+        total += employees[i].salary;
+    }
+    printf("Average Salary: %.2f\n", (float)total / employee_count);
+}
+
+void showEmployeesAboveSalary() {
+    if (employee_count == 0) {
+        printf("No employees found\n");
+        return;
+    }
+
+    int threshold;
+    printf("Enter salary threshold: ");
+    if (scanf("%d", &threshold) != 1) {
+        printf("Invalid input.\n");
+        return;
+    }
+
+    printf("Employees earning above %d:\n", threshold);
+    printf("%-20s %-10s\n", "Name", "Salary");
+
+    int found = 0;
+    for (int i = 0; i < employee_count; i++) {
+        if (employees[i].salary > threshold) {
+            printf("%-20s %-10d\n", employees[i].name, employees[i].salary);
+            found = 1;
+        }
+    }
+
+    if (!found) {
+        printf("No employees found with salary above %d.\n", threshold);
+    }
+}
+
+void findSalaryRange() {
+    if (employee_count == 0) {
+        printf("No employees found.\n");
+        return;
+    }
+
+    int high = 0, low = 0;
+    for (int i = 1; i < employee_count; i++) {
+        if (employees[i].salary > employees[high].salary) high = i;
+        if (employees[i].salary < employees[low].salary) low = i;
+    }
+
+    printf("Salary Range:\n");
+    printf("Highest: %-20s (%d)\n", employees[high].name, employees[high].salary);
+    printf("Lowest : %-20s (%d)\n", employees[low].name, employees[low].salary);
+}
+
+void clearInputBuffer() {
+    while (getchar() != '\n');
+}
+
+int main() {
+    readCSV("employee.csv");
+    int choice;
+
+    do {
+        printf("Employee Management System\n");
+        printf("1. Display All Employees\n");
+        printf("2. Sort by Name\n");
+        printf("3. Show Average Salary\n");
+        printf("4. Show Employees Salary above threshold\n");
+        printf("5. Show Salary Range\n");
+        printf("0. Exit\n");
+        printf("Enter choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input . Please enter a number.\n");
+            clearInputBuffer();
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                displayAll();
+                break;
+            case 2:
+                selectionSortByName();
+                printf("Employees sorted by name:\n");
+                displayAll();
+                break;
+            case 3:
+                calculateAverageSalary();
+                break;
+            case 4:
+                showEmployeesAboveSalary();
+                break;
+            case 5:
+                findSalaryRange();
+                break;
+            case 6:
+                printf("Exiting program.\n");
+                break;
+            default:
+                printf("Invalid choice \n");
+        }
+    } while (choice != 0);
+
+    return 0;
+}
