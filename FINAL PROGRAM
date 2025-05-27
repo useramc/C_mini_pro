@@ -1,1 +1,755 @@
+// FINAL PROGRAM
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_EMPLOYEES 50
+#define MAX_LINE_LENGTH 256
+#define PASSWORD "PES2UG24CS" 
+#define MAX_ATTEMPTS 3            
+
+typedef struct Employee {
+    char Name[50];
+    char ID[10];
+    int Salary;
+    int No_of_leaves;
+    int No_of_paid_leaves;
+    int Claims;
+    int Years_of_service;
+} employee_details;
+
+//BHUVIGNA
+int authenticate_user();
+void read_employees(employee_details employees[], int *count);
+void print_employees(employee_details employees[], int count);
+void add_employees(employee_details employees[], int *count);
+void save_to_csv(employee_details employees[], int count);
+void sort_by_id(employee_details employees[], int count);
+void calculate_total_payroll(employee_details employees[], int count);
+//CHANDANA
+void selectionSortByName(employee_details employees[], int employee_count);
+void calculateAverageSalary(employee_details employees[], int employee_count);
+void showEmployeesAboveSalary(employee_details employees[], int employee_count);
+void findSalaryRange(employee_details employees[], int employee_count);
+void clearInputBuffer();
+void displayEmployees(employee_details employees[], int employee_count);
+//CHINMAYI
+float avg_claims(employee_details s[], int c);
+void display_claims(employee_details s[], int c);
+void sort_by_salary(employee_details s[], int c);
+void display_sorted_salary(employee_details s[], int c);
+void filter_salary_range(employee_details s[], int c, long int ur, long int lr);
+void analyze_leaves(employee_details s[], int c);
+void search_by_id(employee_details s[], int c);
+//DHATRI
+int loadEmployees(employee_details employees[]) {
+    FILE *file = fopen("indian_employee_data.csv", "r");
+    if (!file) {
+        printf("Error opening file.\n");
+        return 0;
+    }
+    int count = 0;
+    char line[256];
+    fgets(line, sizeof(line), file); // Skip header
+    while (fgets(line, sizeof(line), file) && count < MAX_EMPLOYEES) {
+        sscanf(line, "%[^,],%[^,],%d,%d,%d,%d,%d",
+               employees[count].Name,
+               employees[count].ID,
+               &employees[count].Salary,
+               &employees[count].No_of_leaves,
+               &employees[count].No_of_paid_leaves,
+               &employees[count].Claims,
+               &employees[count].Years_of_service);
+        count++;
+    }
+    fclose(file);
+    return count;
+}
+void saveEmployees(employee_details employees[], int count) {
+    FILE *file = fopen("saveEMP.csv", "w");
+    if (!file) {
+        printf("Error saving file.\n");
+        return;
+    }
+    fprintf(file, "Name,ID,Salary,No_of_leaves,No_of_paid_leaves,Claims,Years_of_service\n");
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "%s,%s,%d,%d,%d,%d,%d\n",
+                employees[i].Name,
+                employees[i].ID,
+                employees[i].Salary,
+                employees[i].No_of_leaves,
+                employees[i].No_of_paid_leaves,
+                employees[i].Claims,
+                employees[i].Years_of_service);
+    }
+    fclose(file);
+    printf("Changes saved to '%s'\n", "saveEMP.csv");
+}
+void viewBySalary(employee_details employees[], int count, int salary) {
+    printf("\nEmployees with Salary = %d:\n", salary);
+    int f=0;
+    for (int i = 0; i < count; i++) {
+        if (employees[i].Salary == salary) {
+            printf("%s (%s)\n", employees[i].Name, employees[i].ID);
+            f++;
+        }
+    }
+    if(f==0)
+    printf("NONE OF THE EMPLOYEE HAS THE ENTERED SALARY\n");
+}
+int deleteEmployee(employee_details employees[], int count, char id[]) {
+    int found = 0;
+    for (int i = 0; i < count; i++) {
+        if (strcmp(employees[i].ID, id) == 0) {
+            for (int j = i; j < count - 1; j++) {
+                employees[j] = employees[j + 1];
+            }
+            found = 1;
+            count--;
+            break;
+        }
+    }
+    if (found) {
+        printf("Employee with ID %s deleted.\n", id);
+    } else {
+        printf("Employee with ID %s not found.\n", id);
+    }
+    return count;
+}
+void salaryDistribution(employee_details employees[], int count) {
+    int below30 = 0, between30and50 = 0, above50 = 0;
+    for (int i = 0; i < count; i++) {
+        if (employees[i].Salary < 30000)
+            below30++;
+        else if (employees[i].Salary <= 50000)
+            between30and50++;
+        else
+            above50++;
+    }
+    printf("\nSalary Distribution:\n");
+    printf("< 30,000: %d employees\n", below30);
+    printf("30k – 50k: %d employees\n", between30and50);
+    printf("> 50,000: %d employees\n", above50);
+}
+void calculateBonus(employee_details employees[], int count) {
+    printf("\nBonus Report:\n");
+    for (int i = 0; i < count; i++) {
+        int bonus = employees[i].Years_of_service * 1000;
+        printf("%s (%s) => Bonus: ₹%d\n", employees[i].Name, employees[i].ID, bonus);
+    }
+}
+
+
+int main() {
+
+    //Bhuvigna functions
+    if (!authenticate_user()) {
+        printf("Maximum password attempts exceeded. Exiting...\n");
+        return 1;  // Exit if authentication fails
+    }
+    employee_details employees[MAX_EMPLOYEES];
+    int employee_count = 0;
+
+    read_employees(employees, &employee_count);
+    printf("Existing Employee Details Record:\n");
+    print_employees(employees, employee_count);
+    
+    printf("\nDo you want to add new employees? (1=Yes, 0=No): ");
+    int choice;
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input\n");
+        return 1;
+    }
+    
+    if (choice == 1) {
+        add_employees(employees, &employee_count);
+        save_to_csv(employees, employee_count);
+    }
+
+    printf("\nDo you want to sort employees by ID? (1=Yes, 0=No): ");
+    int sort_choice;
+    if (scanf("%d", &sort_choice) != 1) {
+        printf("Invalid input\n");
+        return 1;
+    }
+    
+    if (sort_choice == 1) {
+        sort_by_id(employees, employee_count);
+    }
+    printf("\nDo you want calculate total payroll? (1=Yes, 0=No): ");
+    if (scanf("%d", &sort_choice) != 1) {
+        printf("Invalid input\n");
+        return 1;
+    }
+    
+    if (sort_choice == 1) {
+       calculate_total_payroll(employees, employee_count);
+    }
+    //print_employees(employees, employee_count);
+    //chandana program functions:
+    choice=-1;
+     do {
+        printf("\nEmployee Management System\n");
+        printf("1. Sort by Name\n");
+        printf("2. Show Average Salary\n");
+        printf("3. Show Employees Salary above threshold\n");
+        printf("4. Show Salary Range\n");
+        printf("0. Exit\n");
+        printf("Enter choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a number.\n");
+            clearInputBuffer();
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                selectionSortByName(employees, employee_count);
+                printf("Employees sorted by name:\n");
+                displayEmployees(employees, employee_count);
+                break;
+            case 2:
+                calculateAverageSalary(employees, employee_count);
+                break;
+            case 3:
+                showEmployeesAboveSalary(employees, employee_count);
+                break;
+            case 4:
+                findSalaryRange(employees, employee_count);
+                break;
+            case 0:
+                printf("Exiting program.\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 0);
+
+    //chinmayi functions
+    printf("DO YOU WANT TO OBTAIN CLAIMS DETAILS?(1-YES/0-NO)\n");
+    scanf("%d",&choice);
+    if(choice==1)
+    display_claims(employees, employee_count);
+    if(choice!=0&& choice!=1)
+    printf("INVALID INPUT!\n");
+
+    printf("DO YOU WANT TO SORT EMPLOYEES BY THEIR SALARY?(1-YES/0-NO)\n");
+    scanf("%d",&choice);
+    if(choice==1)
+    {
+    sort_by_salary(employees, employee_count);
+    display_sorted_salary(employees,employee_count);
+    }
+    if(choice!=0&& choice!=1)
+    printf("INVALID INPUT!\n");
+
+
+    printf("DO YOU WANT DETAILS OF EMPLOYEES WITHIN A SALARY RANGE?(1-YES/0-NO)\n");
+    scanf("%d",&choice);    
+    if(choice==1)
+    {
+    long int ur, lr;
+    printf("Enter salary range (upper and lower): ");
+    scanf("%ld%ld", &ur, &lr);
+    filter_salary_range(employees, employee_count, ur, lr);
+    }
+    if(choice!=0&& choice!=1)
+    printf("INVALID INPUT!\n");
+
+    printf("DO YOU WANT DETAILS OF EMPLOYEES LEAVES ?(1-YES/0-NO)\n");
+    scanf("%d",&choice);  
+    if(choice==1)  
+    analyze_leaves(employees, employee_count);
+    if(choice!=0&& choice!=1)
+    printf("INVALID INPUT!\n");
+
+    printf("DO YOU WANT TO SEARCH EMPLOYEE BY EMPLOYEE ID?(1-YES/0-NO)\n");
+    scanf("%d",&choice); 
+    if(choice==1)     
+    search_by_id(employees, employee_count);
+    if(choice!=0&& choice!=1)
+    printf("INVALID INPUT!\n");
+
+    //DHATRI
+    int count = loadEmployees(employees);
+    if (count == 0) {
+        printf("No data loaded. Exiting...\n");
+        return 1;
+    }
+    do {
+        printf("\n--- Employee Management (Person 4) ---\n");
+        printf("1. View Employees with a Given Salary\n");
+        printf("2. Delete Employee by ID\n");
+        printf("3. Salary Distribution Report\n");
+        printf("4. Calculate Bonus\n");
+        printf("5. Save and Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar(); 
+        if (choice == 1) {
+            int salary;
+            printf("Enter salary to search: ");
+            scanf("%d", &salary);
+            viewBySalary(employees, count, salary);
+        } else if (choice == 2) {
+            char id[10];
+            printf("Enter ID to delete: ");
+            scanf("%s", id);
+            count = deleteEmployee(employees, count, id);
+        } else if (choice == 3) {
+            salaryDistribution(employees, count);
+        } else if (choice == 4) {
+            calculateBonus(employees, count);
+        } else if (choice == 5) {
+            saveEmployees(employees, count);
+        } else {
+            printf("Invalid choice.\n");
+        }
+    } while (choice != 5);
+    return 0;
+}
+int authenticate_user() {
+    char input_password[50];
+    int attempts = 0;
+
+    printf("PASSWORD VERIFICATION\n");
+    while (attempts < MAX_ATTEMPTS) {
+        printf("Enter password (Attempt %d/%d): ", attempts + 1, MAX_ATTEMPTS);
+        scanf("%s", input_password);
+
+        if (strcmp(input_password, PASSWORD) == 0) {
+            printf("Access granted!\n");
+            return 1;  // Success
+        } else {
+            printf("Incorrect password. Try again.\n");
+            attempts++;
+        }
+    }
+    return 0;  // Failed all attempts
+}
+
+void read_employees(employee_details employees[], int *count) {
+    FILE *fp = fopen("indian_employee_data.csv", "r");
+    if (fp == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+    char header[MAX_LINE_LENGTH];
+    if (fgets(header, sizeof(header), fp) == NULL) {
+        fclose(fp);
+        return;
+    }
+
+    *count = 0;
+    while (*count < MAX_EMPLOYEES && 
+           fscanf(fp, "%49[^,],%9[^,],%d,%d,%d,%d,%d\n",
+                  employees[*count].Name,
+                  employees[*count].ID,
+                  &employees[*count].Salary,
+                  &employees[*count].No_of_leaves,
+                  &employees[*count].No_of_paid_leaves,
+                  &employees[*count].Claims,
+                  &employees[*count].Years_of_service) == 7) {
+        (*count)++;
+    }
+
+    fclose(fp);
+}
+
+void print_employees(employee_details employees[], int count) {
+    printf("\nEmployee Details:\n");
+    printf("---------------------------------------------------------------------------------\n");
+    printf("Name\t\tID\tSalary\tLeaves\tPaid Leaves\tClaims\tYears of Service\n");
+    printf("---------------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < count; i++) {
+        printf("%-15s\t%s\t%d\t%d\t%d\t\t%d\t\t%d\n",
+               employees[i].Name,
+               employees[i].ID,
+               employees[i].Salary,
+               employees[i].No_of_leaves,
+               employees[i].No_of_paid_leaves,
+               employees[i].Claims,
+               employees[i].Years_of_service);
+    }
+}
+
+void add_employees(employee_details employees[], int *count) {
+    int num_to_add;
+    printf("How many employees do you want to add? (1-%d): ", MAX_EMPLOYEES - *count);
+    if (scanf("%d", &num_to_add) != 1 || num_to_add <= 0 || num_to_add > MAX_EMPLOYEES - *count) {
+        printf("Invalid number of employees to add\n");
+        return;
+    }
+
+    for (int i = 0; i < num_to_add; i++) {
+        printf("\nEnter details for employee %d/%d:\n", i+1, num_to_add);
+        
+        printf("Name: ");
+        if (scanf(" %49[^\n]", employees[*count].Name) != 1) {
+            printf("Invalid name input\n");
+            continue;
+        }
+
+        printf("ID: ");
+        if (scanf(" %9s", employees[*count].ID) != 1) {
+            printf("Invalid ID input\n");
+            continue;
+        }
+
+        printf("Salary: ");
+        if (scanf("%d", &employees[*count].Salary) != 1) {
+            printf("Invalid salary input\n");
+            continue;
+        }
+
+        printf("No. of Leaves: ");
+        if (scanf("%d", &employees[*count].No_of_leaves) != 1) {
+            printf("Invalid leaves input\n");
+            continue;
+        }
+
+        printf("No. of Paid Leaves: ");
+        if (scanf("%d", &employees[*count].No_of_paid_leaves) != 1) {
+            printf("Invalid paid leaves input\n");
+            continue;
+        }
+
+        printf("Claims: ");
+        if (scanf("%d", &employees[*count].Claims) != 1) {
+            printf("Invalid claims input\n");
+            continue;
+        }
+
+        printf("Years of Service: ");
+        if (scanf("%d", &employees[*count].Years_of_service) != 1) {
+            printf("Invalid years of service input\n");
+            continue;
+        }
+
+        (*count)++;
+        printf("Employee added successfully!\n");
+    }
+}
+
+void save_to_csv(employee_details employees[], int count) {
+    FILE *fp = fopen("indian_employee_data_updated.csv", "w");
+    if (fp == NULL) {
+        perror("Error opening file for writing");
+        return;
+    }
+
+    fprintf(fp, "Name,ID,Salary (INR),No. of Leaves,No. of Paid Leaves,Claims (INR),Years of Service\n");
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%s,%s,%d,%d,%d,%d,%d\n",
+                employees[i].Name,
+                employees[i].ID,
+                employees[i].Salary,
+                employees[i].No_of_leaves,
+                employees[i].No_of_paid_leaves,
+                employees[i].Claims,
+                employees[i].Years_of_service);
+    }
+
+    if (fclose(fp) != 0) {
+        perror("Error closing file");
+    }
+    printf("\nEmployee data saved to 'indian_employee_data_updated.csv'\n");
+}
+
+int extract_id_number(const char *id) {
+    // Skip non-digit characters
+    while (*id && !isdigit(*id)) {
+        id++;
+    }
+    
+    // Convert the remaining digits to a number
+    return atoi(id);
+}
+
+void sort_by_id(employee_details employees[], int count) {
+    // Using Bubble sort
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            int id1 = extract_id_number(employees[j].ID);
+            int id2 = extract_id_number(employees[j+1].ID);
+            
+            if (id1 > id2) {
+                // Swap the employees
+                employee_details temp = employees[j];
+                employees[j] = employees[j+1];
+                employees[j+1] = temp;
+            }
+        }
+    }
+    printf("\nEmployees sorted by ID successfully!\n");}
+    void calculate_total_payroll(employee_details employees[], int count) 
+    {
+    int total_salary = 0;
+    int total_claims = 0;
+    int total_payroll = 0;
+    
+
+    for (int i = 0; i < count; i++) {
+        total_salary += employees[i].Salary;
+        total_claims += employees[i].Claims;
+    }
+
+    // Adjust for unpaid leaves (assuming unpaid leaves = total leaves - paid leaves)
+    for (int i = 0; i < count; i++) {
+        int unpaid_leaves = employees[i].No_of_leaves - employees[i].No_of_paid_leaves;
+        if (unpaid_leaves > 0) {
+            // Deduct a day's wage for each unpaid leave (assuming 30 days/month)
+            int daily_wage = employees[i].Salary / 30;
+            total_salary -= (unpaid_leaves * daily_wage);
+        }
+    }
+total_payroll = total_salary + total_claims;
+
+    printf("\n--- Payroll Summary ---\n");
+    printf("Total Base Salaries: Rs.%d\n", total_salary);
+    printf("Total Claims: Rs.%d\n", total_claims);
+    printf("Total Payroll (Salaries + Claims): Rs.%d\n",total_payroll);
+}
+// CHANDANA
+void selectionSortByName(employee_details employees[], int employee_count) {
+    for (int i = 0; i < employee_count - 1; i++) {
+        int min = i;
+        for (int j = i + 1; j < employee_count; j++) {
+            if (strcmp(employees[j].Name, employees[min].Name) < 0) {
+                min = j;
+            }
+        }
+        if (min != i) {
+            employee_details temp = employees[i];
+            employees[i] = employees[min];
+            employees[min] = temp;
+        }
+    }
+}
+
+void calculateAverageSalary(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found to calculate average.\n");
+        return;
+    }
+
+    int total = 0;
+    for (int i = 0; i < employee_count; i++) {
+        total += employees[i].Salary;
+    }
+    printf("Average Salary: %.2f\n", (float)total / employee_count);
+}
+
+void showEmployeesAboveSalary(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found\n");
+        return;
+    }
+
+    int threshold;
+    printf("Enter salary threshold: ");
+    if (scanf("%d", &threshold) != 1) {
+        printf("Invalid input.\n");
+        return;
+    }
+
+    printf("Employees earning above %d:\n", threshold);
+    printf("%-20s %-10s\n", "Name", "Salary");
+
+    int found = 0;
+    for (int i = 0; i < employee_count; i++) {
+        if (employees[i].Salary > threshold) {
+            printf("%-20s %-10d\n", employees[i].Name, employees[i].Salary);
+            found = 1;
+        }
+    }
+
+    if (!found) {
+        printf("No employees found with salary above %d.\n", threshold);
+    }
+}
+
+void findSalaryRange(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found.\n");
+        return;
+    }
+
+    int high = 0, low = 0;
+    for (int i = 1; i < employee_count; i++) {
+        if (employees[i].Salary > employees[high].Salary) high = i;
+        if (employees[i].Salary < employees[low].Salary) low = i;
+    }
+
+    printf("Salary Range:\n");
+    printf("Highest: %-20s (%d)\n", employees[high].Name, employees[high].Salary);
+    printf("Lowest : %-20s (%d)\n", employees[low].Name, employees[low].Salary);
+}
+
+void clearInputBuffer() {
+    while (getchar() != '\n');
+}
+
+void displayEmployees(employee_details employees[], int employee_count) {
+    for (int i = 0; i < employee_count; i++) {
+        printf("%-20s %-10s %-8d\n", employees[i].Name, employees[i].ID, employees[i].Salary);
+    }
+}
+//CHINMAYI
+float avg_claims(employee_details s[], int c) {
+    float total = 0.0;
+    for (int i = 0; i < c; i++) {
+        total += s[i].Claims;
+    }
+    return total / c;
+}
+
+void display_claims(employee_details s[], int c) {
+    FILE *fp = fopen("claims_details.csv", "w");
+    if (!fp) {
+        printf("Error: Unable to write claims details.\n");
+        return;
+    }
+
+    float avg = avg_claims(s, c);
+    for (int i = 0; i < c; i++) {
+        fprintf(fp, "\nNAME: %s\nID: %s\nCLAIMS: %d\n", s[i].Name, s[i].ID, s[i].Claims);
+    }
+    fprintf(fp, "\nAVERAGE CLAIMS: %.2f\n", avg);
+    fclose(fp);
+
+    printf("AVERAGE CLAIMS: %.2f\n", avg);
+}
+
+void sort_by_salary(employee_details s[], int c) {
+    for (int i = 0; i < c - 1; i++) {
+        for (int j = i + 1; j < c; j++) {
+            if (s[j].Salary > s[i].Salary) {
+                employee_details temp = s[i];
+                s[i] = s[j];
+                s[j] = temp;
+            }
+        }
+    }
+}
+
+void display_sorted_salary(employee_details s[], int c) {
+    FILE *fp = fopen("Sorted Salary details.csv", "w");
+    if (!fp) {
+        printf("Error: Unable to write sorted salary details.\n");
+        return;
+    }
+
+    fprintf(fp, "NAME,EMP ID,SALARY\n");
+    for (int i = 0; i < c; i++) {
+        fprintf(fp, "%s,%s,%d\n", s[i].Name, s[i].ID, s[i].Salary);
+    }
+    fclose(fp);
+
+    printf("Sorting successful. Check \"Sorted Salary details.csv\".\n");
+}
+
+void filter_salary_range(employee_details s[], int c, long int ur, long int lr) {
+    FILE *fp = fopen("details.csv", "w");
+    if (!fp) {
+        printf("Error: Unable to write salary range filter results.\n");
+        return;
+    }
+
+    if (lr > ur) { long int t = lr; lr = ur; ur = t; }
+
+    fprintf(fp, "EMPLOYEES WITH SALARY RANGE %ld - %ld\n\n", lr, ur);
+    for (int i = 0; i < c; i++) {
+        if (s[i].Salary >= lr && s[i].Salary <= ur) {
+            fprintf(fp, "NAME: %s\tSALARY: %d\n\n", s[i].Name, s[i].Salary);
+        }
+    }
+    fclose(fp);
+}
+
+void analyze_leaves(employee_details s[], int c) {
+    FILE *f1 = fopen("leaves_paid1.csv", "w");
+    FILE *f2 = fopen("leaves_paid2.csv", "w");
+    FILE *f3 = fopen("leaves_paid3.csv", "w");
+    if (!f1 || !f2 || !f3) {
+        printf("Error: Unable to write leave analysis.\n");
+        return;
+    }
+
+    fprintf(f1, "DETAILS (LEAVES TAKEN < PAID LEAVES ALLOTED)\n");
+    fprintf(f2, "DETAILS (LEAVES TAKEN = PAID LEAVES ALLOTED )\n");
+    fprintf(f3, "DETAILS(LEAVES TAKEN > PAID LEAVES ALLOTED)\n");
+
+    for (int i = 0; i < c; i++) {
+        if (s[i].No_of_leaves < s[i].No_of_paid_leaves) {
+            fprintf(f1, "Name: %s\nLeaves: %d\nPaid Leaves: %d\nExtra Pending: %d\n\n",
+                    s[i].Name, s[i].No_of_leaves, s[i].No_of_paid_leaves, s[i].No_of_paid_leaves - s[i].No_of_leaves);
+        } else if (s[i].No_of_leaves == s[i].No_of_paid_leaves) {
+            fprintf(f2, "Name: %s\nLeaves: %d\nPaid Leaves: %d\nExact Match\n\n",
+                    s[i].Name, s[i].No_of_leaves, s[i].No_of_paid_leaves);
+        } else {
+            fprintf(f3, "Name: %s\nLeaves: %d\nPaid Leaves: %d\nExtra Taken: %d\n\n",
+                    s[i].Name, s[i].No_of_leaves, s[i].No_of_paid_leaves, s[i].No_of_leaves - s[i].No_of_paid_leaves);
+        }
+    }
+    printf("Analysis success!, data uploaded in files\n");
+    fclose(f1);
+    fclose(f2);
+    fclose(f3);
+}
+
+void search_by_id(employee_details s[], int c) {
+    char eID[10], ch;
+    FILE *f1 = fopen("history.txt", "a");
+    FILE *f2 = fopen("RECENT_history.txt", "w");
+
+    if (!f1 || !f2) {
+        printf("Error: Unable to write search history.\n");
+        return;
+    }
+
+    fprintf(f2, "SEARCH HISTORY\n");
+
+    do {
+        printf("ENTER EMPLOYEE ID TO SEARCH: ");
+        scanf("%s", eID);
+
+        int found = 0;
+        for (int i = 0; i < c; i++) {
+            if (strcmp(s[i].ID, eID) == 0) {
+                found = 1;
+                printf("EMPLOYEE FOUND!\nNAME: %s\nSALARY: %d\nYEARS OF SERVICE: %d\n", s[i].Name, s[i].Salary, s[i].Years_of_service);
+                fprintf(f1, "ID: %s\nNAME: %s\nSALARY: %d\nYEARS OF SERVICE: %d\n\n", eID, s[i].Name, s[i].Salary, s[i].Years_of_service);
+                fprintf(f2, "ID: %s\nNAME: %s\nSALARY: %d\nYEARS OF SERVICE: %d\n\n", eID, s[i].Name, s[i].Salary, s[i].Years_of_service);
+                break;
+            }
+        }
+
+        if (!found) {
+            printf("EMPLOYEE NOT FOUND\n");
+            fprintf(f1, "ID: %s NOT FOUND\n\n", eID);
+            fprintf(f2, "ID: %s NOT FOUND\n\n", eID);
+        }
+
+        printf("Do you want to search again? (Y/N): ");
+        scanf(" %c", &ch);
+    } while (ch != 'n' && ch != 'N');
+   
+    int n=-1,r;
+    printf("\nDO YOU WANT TO VIEW SEARCH HISTORY?(Y-1/N-0)\n");
+    scanf("%d",&n);
+    if(n==1)
+    {
+        if(authenticate_user())
+        printf("SEARCH HISTORY IS ENABLED IN \"recent_history\" and \"search_history\". \n");
+        else
+        printf("ACCESS FAILED\n");
+    }
+
+    fclose(f1);
+    fclose(f2);
+}
