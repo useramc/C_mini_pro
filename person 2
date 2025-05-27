@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_EMPLOYEES 100
+
+typedef struct Employee {
+    char Name[50];
+    char ID[10];
+    int Salary;
+    int No_of_leaves;
+    int No_of_paid_leaves;
+    int Claims;
+    int Years_of_service;
+} employee_details;
+
+
+void selectionSortByName(employee_details employees[], int employee_count);
+void calculateAverageSalary(employee_details employees[], int employee_count);
+void showEmployeesAboveSalary(employee_details employees[], int employee_count);
+void findSalaryRange(employee_details employees[], int employee_count);
+void clearInputBuffer();
+void displayEmployees(employee_details employees[], int employee_count);
+
+employee_details employees[MAX_EMPLOYEES];
+int employee_count = 0;
+
+int main() {
+   
+    int choice;
+    do {
+        printf("\nEmployee Management System\n");
+        printf("1. Sort by Name\n");
+        printf("2. Show Average Salary\n");
+        printf("3. Show Employees Salary above threshold\n");
+        printf("4. Show Salary Range\n");
+        printf("0. Exit\n");
+        printf("Enter choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Please enter a number.\n");
+            clearInputBuffer();
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                selectionSortByName(employees, employee_count);
+                printf("Employees sorted by name:\n");
+                displayEmployees(employees, employee_count);
+                break;
+            case 2:
+                calculateAverageSalary(employees, employee_count);
+                break;
+            case 3:
+                showEmployeesAboveSalary(employees, employee_count);
+                break;
+            case 4:
+                findSalaryRange(employees, employee_count);
+                break;
+            case 0:
+                printf("Exiting program.\n");
+                break;
+            default:
+                printf("Invalid choice\n");
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+void selectionSortByName(employee_details employees[], int employee_count) {
+    for (int i = 0; i < employee_count - 1; i++) {
+        int min = i;
+        for (int j = i + 1; j < employee_count; j++) {
+            if (strcmp(employees[j].Name, employees[min].Name) < 0) {
+                min = j;
+            }
+        }
+        if (min != i) {
+            employee_details temp = employees[i];
+            employees[i] = employees[min];
+            employees[min] = temp;
+        }
+    }
+}
+
+void calculateAverageSalary(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found to calculate average.\n");
+        return;
+    }
+
+    int total = 0;
+    for (int i = 0; i < employee_count; i++) {
+        total += employees[i].Salary;
+    }
+    printf("Average Salary: %.2f\n", (float)total / employee_count);
+}
+
+void showEmployeesAboveSalary(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found\n");
+        return;
+    }
+
+    int threshold;
+    printf("Enter salary threshold: ");
+    if (scanf("%d", &threshold) != 1) {
+        printf("Invalid input.\n");
+        return;
+    }
+
+    printf("Employees earning above %d:\n", threshold);
+    printf("%-20s %-10s\n", "Name", "Salary");
+
+    int found = 0;
+    for (int i = 0; i < employee_count; i++) {
+        if (employees[i].Salary > threshold) {
+            printf("%-20s %-10d\n", employees[i].Name, employees[i].Salary);
+            found = 1;
+        }
+    }
+
+    if (!found) {
+        printf("No employees found with salary above %d.\n", threshold);
+    }
+}
+
+void findSalaryRange(employee_details employees[], int employee_count) {
+    if (employee_count == 0) {
+        printf("No employees found.\n");
+        return;
+    }
+
+    int high = 0, low = 0;
+    for (int i = 1; i < employee_count; i++) {
+        if (employees[i].Salary > employees[high].Salary) high = i;
+        if (employees[i].Salary < employees[low].Salary) low = i;
+    }
+
+    printf("Salary Range:\n");
+    printf("Highest: %-20s (%d)\n", employees[high].Name, employees[high].Salary);
+    printf("Lowest : %-20s (%d)\n", employees[low].Name, employees[low].Salary);
+}
+
+void clearInputBuffer() {
+    while (getchar() != '\n');
+}
+
+void displayEmployees(employee_details employees[], int employee_count) {
+    for (int i = 0; i < employee_count; i++) {
+        printf("%-20s %-10s %-8d\n", employees[i].Name, employees[i].ID, employees[i].Salary);
+    }
+}
