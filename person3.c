@@ -54,7 +54,7 @@ int authenticate_user() {     //already present in main
     char input_password[50];
     int attempts = 0;
 
-    printf("=== Payroll System Access ===\n");
+    printf("=== Payroll System Access ===\n");// LETS REPLACE THIS PART WITH SMTG ELSE !! SO THAT IT IN OTHER FUNCTIONS
     while (attempts < MAX_ATTEMPTS) {
         printf("Enter password (Attempt %d/%d): ", attempts + 1, MAX_ATTEMPTS);
         scanf("%s", input_password);
