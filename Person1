@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-
 #define MAX_EMPLOYEES 50
 #define MAX_LINE_LENGTH 256
 #define PASSWORD "PES2UG24CS" 
