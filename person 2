@@ -22,8 +22,7 @@ void findSalaryRange(employee_details employees[], int employee_count);
 void clearInputBuffer();
 void displayEmployees(employee_details employees[], int employee_count);
 
-employee_details employees[MAX_EMPLOYEES];
-int employee_count = 0;
+
 
 int main() {
    
