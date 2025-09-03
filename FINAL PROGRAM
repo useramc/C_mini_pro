@@ -7,7 +7,7 @@
 
 #define MAX_EMPLOYEES 50
 #define MAX_LINE_LENGTH 256
-#define PASSWORD "PES2UG24CS" 
+#define PASSWORD "ABCS" 
 #define MAX_ATTEMPTS 3            
 
 typedef struct Employee {
@@ -20,7 +20,7 @@ typedef struct Employee {
     int Years_of_service;
 } employee_details;
 
-//BHUVIGNA
+//
 int authenticate_user();
 void read_employees(employee_details employees[], int *count);
 void print_employees(employee_details employees[], int count);
@@ -28,14 +28,14 @@ void add_employees(employee_details employees[], int *count);
 void save_to_csv(employee_details employees[], int count);
 void sort_by_id(employee_details employees[], int count);
 void calculate_total_payroll(employee_details employees[], int count);
-//CHANDANA
+//
 void selectionSortByName(employee_details employees[], int employee_count);
 void calculateAverageSalary(employee_details employees[], int employee_count);
 void showEmployeesAboveSalary(employee_details employees[], int employee_count);
 void findSalaryRange(employee_details employees[], int employee_count);
 void clearInputBuffer();
 void displayEmployees(employee_details employees[], int employee_count);
-//CHINMAYI
+//
 float avg_claims(employee_details s[], int c);
 void display_claims(employee_details s[], int c);
 void sort_by_salary(employee_details s[], int c);
@@ -43,7 +43,7 @@ void display_sorted_salary(employee_details s[], int c);
 void filter_salary_range(employee_details s[], int c, long int ur, long int lr);
 void analyze_leaves(employee_details s[], int c);
 void search_by_id(employee_details s[], int c);
-//DHATRI
+//
 int loadEmployees(employee_details employees[]) {
     FILE *file = fopen("indian_employee_data.csv", "r");
     if (!file) {
@@ -144,7 +144,7 @@ void calculateBonus(employee_details employees[], int count) {
 
 int main() {
 
-    //Bhuvigna functions
+    
     if (!authenticate_user()) {
         printf("Maximum password attempts exceeded. Exiting...\n");
         return 1;  // Exit if authentication fails
@@ -187,8 +187,8 @@ int main() {
     if (sort_choice == 1) {
        calculate_total_payroll(employees, employee_count);
     }
-    //print_employees(employees, employee_count);
-    //chandana program functions:
+    print_employees(employees, employee_count);
+    
     choice=-1;
      do {
         printf("\nEmployee Management System\n");
@@ -228,7 +228,7 @@ int main() {
         }
     } while (choice != 0);
 
-    //chinmayi functions
+   
     printf("DO YOU WANT TO OBTAIN CLAIMS DETAILS?(1-YES/0-NO)\n");
     scanf("%d",&choice);
     if(choice==1)
@@ -273,7 +273,7 @@ int main() {
     if(choice!=0&& choice!=1)
     printf("INVALID INPUT!\n");
 
-    //DHATRI
+  
     int count = loadEmployees(employees);
     if (count == 0) {
         printf("No data loaded. Exiting...\n");
